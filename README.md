@@ -1,117 +1,79 @@
+# Smart Distance Warning System
 
-#include <LiquidCrystal_I2C.h>
+An Arduino Uno-based distance monitoring and warning system built using an HC-SR04 ultrasonic sensor, three LEDs, a buzzer, and a 16×2 I²C LCD. The project measures the distance to an object and provides visual and audible warnings based on proximity.
 
-// Ultrasonic sensor pins
-const int trigPin = 3;
-const int echoPin = 2;
+## Features
 
-// LED and buzzer pins
-const int greenLED = 4;
-const int yellowLED = 5;
-const int redLED = 6;
-const int buzzer = 7;
+- Real-time distance measurement using an ultrasonic sensor
+- LCD display showing distance and warning status
+- Three-level visual indication using green, yellow, and red LEDs
+- Audible alerts using a buzzer
+- Serial Monitor output for debugging
+- Timeout handling for missing ultrasonic echoes
 
-// LCD: I2C address, columns, rows
-LiquidCrystal_I2C lcd(0x27, 16, 2);
+## Components Used
 
-void setup() {
-  pinMode(trigPin, OUTPUT);
-  pinMode(echoPin, INPUT);
+- Arduino Uno
+- HC-SR04 ultrasonic sensor
+- 16×2 LCD with I²C interface
+- Green, yellow, and red LEDs
+- 220 Ω resistors
+- Buzzer
+- Wokwi simulator
 
-  pinMode(greenLED, OUTPUT);
-  pinMode(yellowLED, OUTPUT);
-  pinMode(redLED, OUTPUT);
-  pinMode(buzzer, OUTPUT);
+## Pin Connections
 
-  Serial.begin(9600);
+| Component | Arduino Uno pin |
+|---|---|
+| Ultrasonic TRIG | D3 |
+| Ultrasonic ECHO | D2 |
+| Green LED | D4 |
+| Yellow LED | D5 |
+| Red LED | D6 |
+| Buzzer | D7 |
+| LCD SDA | A4 |
+| LCD SCL | A5 |
+| LCD VCC | 5V |
+| LCD GND | GND |
 
-  // Initialize LCD
-  lcd.init();
-  lcd.backlight();
+## Operating Logic
 
-  lcd.setCursor(0, 0);
-  lcd.print("Distance Monitor");
+| Distance | LED | Status |
+|---|---|---|
+| Greater than 30 cm | Green | SAFE |
+| Greater than 10 cm and up to 30 cm | Yellow | WARNING |
+| 10 cm or less | Red | DANGER |
 
-  lcd.setCursor(0, 1);
-  lcd.print("Initializing...");
+If no ultrasonic echo is detected, the LEDs and buzzer are turned off and the LCD displays an error status.
 
-  delay(1500);
-  lcd.clear();
-}
+## Run the Project
 
-void loop() {
-  // Trigger the ultrasonic sensor
-  digitalWrite(trigPin, LOW);
-  delayMicroseconds(2);
+1. Open the Wokwi simulation using the project link in `wokwi-project.txt`.
+2. Ensure the `LiquidCrystal I2C` library is available.
+3. Start the simulation.
+4. Change the simulated object distance and observe the LCD, LEDs, and buzzer.
 
-  digitalWrite(trigPin, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(trigPin, LOW);
+## Project Files
 
-  // Measure echo duration
-  long duration = pulseIn(echoPin, HIGH, 30000);
+- `sketch.ino` — Arduino source code
+- `diagram.json` — Circuit layout and connections
+- `libraries.txt` — Required Wokwi library
+- `wokwi-project.txt` — Simulation link
 
-  if (duration == 0) {
-    // No valid echo received
-    Serial.println("No echo detected");
+## Future Improvements
 
-    digitalWrite(greenLED, LOW);
-    digitalWrite(yellowLED, LOW);
-    digitalWrite(redLED, LOW);
-    noTone(buzzer);
+- Filter noisy sensor readings
+- Adjust buzzer beep frequency based on distance
+- Add a mute button
+- Validate the design using physical hardware
 
-    lcd.setCursor(0, 0);
-    lcd.print("Distance: -- cm ");
+## Contributors
 
-    lcd.setCursor(0, 1);
-    lcd.print("No echo detected");
-  }
-  else {
-    // Convert echo duration to distance in cm
-    float distance = duration / 58.0;
+- Parth Khatri
+- Akshansh Sharma
 
-    Serial.print("Distance: ");
-    Serial.print(distance);
-    Serial.println(" cm");
+## Development Environment
 
-    // Display measured distance
-    lcd.setCursor(0, 0);
-    lcd.print("Distance:       ");
-    lcd.setCursor(10, 0);
-    lcd.print(distance, 1);
-    lcd.print("cm");
+Arduino C++ · Arduino Uno · Wokwi Simulator
 
-    if (distance > 30) {
-      // SAFE ZONE
-      digitalWrite(greenLED, HIGH);
-      digitalWrite(yellowLED, LOW);
-      digitalWrite(redLED, LOW);
-      noTone(buzzer);
-
-      lcd.setCursor(0, 1);
-      lcd.print("Status: SAFE    ");
-    }
-    else if (distance > 10) {
-      // WARNING ZONE
-      digitalWrite(greenLED, LOW);
-      digitalWrite(yellowLED, HIGH);
-      digitalWrite(redLED, LOW);
-      tone(buzzer, 1000, 100);
-
-      lcd.setCursor(0, 1);
-      lcd.print("Status: WARNING ");
-    }
-    else {
-      // DANGER ZONE
-      digitalWrite(greenLED, LOW);
-      digitalWrite(yellowLED, LOW);
-      digitalWrite(redLED, HIGH);
-      tone(buzzer, 1000);
-
-      lcd.setCursor(0, 1);
-      lcd.print("Status: DANGER  ");
-    }
-  }
-
-  delay(200);
-}
+*This project was developed and simulated in Wokwi. Physical hardware testing should be documented separately if performed.*
