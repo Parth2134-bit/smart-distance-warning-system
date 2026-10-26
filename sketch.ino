@@ -1,93 +1,114 @@
-{
-  "version": 1,
-  "author": "Akshansh",
-  "editor": "wokwi",
-  "parts": [
-    { "type": "wokwi-arduino-uno", "id": "uno", "top": 0, "left": 0, "attrs": {} },
-    {
-      "type": "wokwi-hc-sr04",
-      "id": "ultrasonic1",
-      "top": -180.9,
-      "left": 82.3,
-      "attrs": { "distance": "116" }
-    },
-    {
-      "type": "wokwi-led",
-      "id": "led1",
-      "top": -118.8,
-      "left": -44.2,
-      "attrs": { "color": "yellow" }
-    },
-    {
-      "type": "wokwi-led",
-      "id": "led2",
-      "top": -118.8,
-      "left": 42.2,
-      "attrs": { "color": "red" }
-    },
-    {
-      "type": "wokwi-led",
-      "id": "led3",
-      "top": -118.8,
-      "left": -5.8,
-      "attrs": { "color": "limegreen" }
-    },
-    {
-      "type": "wokwi-resistor",
-      "id": "r1",
-      "top": 80.75,
-      "left": 297.6,
-      "attrs": { "value": "220" }
-    },
-    {
-      "type": "wokwi-resistor",
-      "id": "r2",
-      "top": 42.35,
-      "left": 288,
-      "attrs": { "value": "220" }
-    },
-    {
-      "type": "wokwi-resistor",
-      "id": "r3",
-      "top": 147.95,
-      "left": 307.2,
-      "attrs": { "value": "220" }
-    },
-    {
-      "type": "wokwi-buzzer",
-      "id": "bz1",
-      "top": -199.2,
-      "left": 299.4,
-      "attrs": { "volume": "0.1" }
-    },
-    {
-      "type": "wokwi-lcd1602",
-      "id": "lcd1",
-      "top": -118.4,
-      "left": 370.4,
-      "attrs": { "pins": "i2c" }
+
+#include <LiquidCrystal_I2C.h>
+
+// Ultrasonic sensor pins
+const int trigPin = 3;
+const int echoPin = 2;
+
+// LED and buzzer pins
+const int greenLED = 4;
+const int yellowLED = 5;
+const int redLED = 6;
+const int buzzer = 7;
+
+// I2C LCD: address, columns, rows
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+void setup() {
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+
+  pinMode(greenLED, OUTPUT);
+  pinMode(yellowLED, OUTPUT);
+  pinMode(redLED, OUTPUT);
+  pinMode(buzzer, OUTPUT);
+
+  Serial.begin(9600);
+
+  // Initialize LCD
+  lcd.init();
+  lcd.backlight();
+
+  lcd.setCursor(0, 0);
+  lcd.print("Distance Monitor");
+
+  lcd.setCursor(0, 1);
+  lcd.print("Initializing...");
+
+  delay(1500);
+  lcd.clear();
+}
+
+void loop() {
+  // Trigger the ultrasonic sensor
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  // Read echo duration (30 ms timeout)
+  long duration = pulseIn(echoPin, HIGH, 30000);
+
+  if (duration == 0) {
+    // No valid echo received
+    Serial.println("No echo detected");
+
+    digitalWrite(greenLED, LOW);
+    digitalWrite(yellowLED, LOW);
+    digitalWrite(redLED, LOW);
+    noTone(buzzer);
+
+    lcd.setCursor(0, 0);
+    lcd.print("Distance: -- cm ");
+
+    lcd.setCursor(0, 1);
+    lcd.print("No echo detected");
+  } else {
+    // Convert echo duration to distance in centimetres
+    float distance = duration / 58.0;
+
+    Serial.print("Distance: ");
+    Serial.print(distance);
+    Serial.println(" cm");
+
+    // Display distance
+    lcd.setCursor(0, 0);
+    lcd.print("Distance:       ");
+    lcd.setCursor(10, 0);
+    lcd.print(distance, 1);
+    lcd.print("cm");
+
+    if (distance > 30) {
+      // SAFE ZONE
+      digitalWrite(greenLED, HIGH);
+      digitalWrite(yellowLED, LOW);
+      digitalWrite(redLED, LOW);
+      noTone(buzzer);
+
+      lcd.setCursor(0, 1);
+      lcd.print("Status: SAFE    ");
+    } else if (distance > 10) {
+      // WARNING ZONE
+      digitalWrite(greenLED, LOW);
+      digitalWrite(yellowLED, HIGH);
+      digitalWrite(redLED, LOW);
+      tone(buzzer, 1000, 100);
+
+      lcd.setCursor(0, 1);
+      lcd.print("Status: WARNING ");
+    } else {
+      // DANGER ZONE
+      digitalWrite(greenLED, LOW);
+      digitalWrite(yellowLED, LOW);
+      digitalWrite(redLED, HIGH);
+      tone(buzzer, 1000);
+
+      lcd.setCursor(0, 1);
+      lcd.print("Status: DANGER  ");
     }
-  ],
-  "connections": [
-    [ "ultrasonic1:VCC", "uno:5V", "red", [ "v0" ] ],
-    [ "ultrasonic1:GND", "uno:GND.1", "black", [ "v0" ] ],
-    [ "ultrasonic1:TRIG", "uno:3", "green", [ "v0" ] ],
-    [ "ultrasonic1:ECHO", "uno:2", "green", [ "v0" ] ],
-    [ "bz1:2", "uno:7", "green", [ "v0" ] ],
-    [ "bz1:1", "uno:GND.1", "green", [ "v0" ] ],
-    [ "led1:C", "uno:GND.2", "green", [ "v0" ] ],
-    [ "led3:C", "uno:GND.2", "green", [ "v0" ] ],
-    [ "led2:C", "uno:GND.2", "green", [ "v0" ] ],
-    [ "led3:A", "r2:1", "green", [ "v0" ] ],
-    [ "r2:2", "uno:4", "green", [ "v0" ] ],
-    [ "led2:A", "r3:1", "green", [ "v0" ] ],
-    [ "r3:2", "uno:6", "green", [ "v0" ] ],
-    [ "led1:A", "r1:1", "green", [ "v0" ] ],
-    [ "r1:2", "uno:5", "green", [ "v0" ] ],
-    [ "lcd1:GND", "uno:GND.1", "black", [ "h-259.2", "v96" ] ],
-    [ "lcd1:VCC", "uno:5V", "red", [ "h-211.2", "v268.9" ] ],
-    [ "lcd1:SDA", "uno:A4", "green", [ "h-124.8", "v259.4" ] ],
-    [ "lcd1:SCL", "uno:A5", "green", [ "h0" ] ]
-  ],
-  "dependencies": {}
+  }
+
+  delay(200);
 }
