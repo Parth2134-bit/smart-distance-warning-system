@@ -60,6 +60,15 @@ If no ultrasonic echo is detected, the LEDs and buzzer are turned off and the LC
 - `libraries.txt` — Required Wokwi library
 - `wokwi-project.txt` — Simulation link
 
+## Circuit Diagram
+
+![Smart Distance Warning System Circuit](circuit.png)
+
+## Wokwi Simulation
+
+[Run the project on Wokwi](https://wokwi.com/projects/478959148210242561)
+
+
 ## Future Improvements
 
 - Filter noisy sensor readings
